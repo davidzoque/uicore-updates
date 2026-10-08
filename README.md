@@ -24,6 +24,10 @@ This plugin bridges that gap.
 - Deletes `uicore-theme-update.zip`, the package that UiCore's updater leaves in
   `wp-content/uploads`.
 - Clears the WP Compress and LiteSpeed Cache caches after the update.
+- Keeps UiCore's internal templates (Theme Builder headers, footers and popups,
+  and the brand kit) out of the sitemap and adds `noindex` to them, so Google
+  doesn't index them as standalone pages. Works with the WordPress sitemap,
+  Yoast SEO and Rank Math.
 - Your license token never leaves your site: the update list only holds a
   placeholder, and the real download link is built on your server when the
   update runs.

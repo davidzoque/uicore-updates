@@ -3,7 +3,7 @@
  * Plugin Name: UiCore Updates
  * Plugin URI:  https://github.com/davidzoque/uicore-updates
  * Description: Shows UiCore Pro theme updates (including white-label themes) as regular WordPress updates, so they appear in Dashboard > Updates and in Modular DS. After the theme updates, it installs the bundled UiCore Framework, rebuilds the theme CSS over HTTPS and clears the caches.
- * Version:     1.0.7
+ * Version:     1.0.8
  * Author:      Dox Studio
  * Author URI:  https://doxstudio.com
  * License:     GPL-2.0+
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'DOX_UU_VERSION', '1.0.7' );
+define( 'DOX_UU_VERSION', '1.0.8' );
 define( 'DOX_UU_FILE', __FILE__ );
 
 // ─── Auto-actualizaciones desde GitHub (Plugin Update Checker) ────────────────
@@ -465,6 +465,49 @@ add_filter(
 	},
 	10,
 	2
+);
+
+// ─── Plantillas de UiCore fuera de Google ─────────────────────────────────────
+// Las plantillas del Theme Builder (cabeceras, pies, popups) y el kit de marca
+// son tipos de post públicos, así que salen en el mapa del sitio y se pueden abrir
+// sueltas. Se quedan abribles (el editor de Elementor las necesita), pero fuera
+// del mapa y con noindex.
+const DOX_UU_TEMPLATE_TYPES = array( 'uicore-tb', 'uicore-cd' );
+
+// Mapa del sitio de WordPress.
+add_filter(
+	'wp_sitemaps_post_types',
+	function ( $post_types ) {
+		return array_diff_key( $post_types, array_flip( DOX_UU_TEMPLATE_TYPES ) );
+	}
+);
+
+// Mapas de Yoast SEO y Rank Math.
+$dox_uu_exclude_type = function ( $exclude, $post_type ) {
+	return in_array( $post_type, DOX_UU_TEMPLATE_TYPES, true ) ? true : $exclude;
+};
+add_filter( 'wpseo_sitemap_exclude_post_type', $dox_uu_exclude_type, 10, 2 );
+add_filter( 'rank_math/sitemap/exclude_post_type', $dox_uu_exclude_type, 10, 2 );
+
+// noindex. Yoast junta su valor con este y deja el noindex; Rank Math quita los
+// filtros de wp_robots, así que lleva el suyo.
+add_filter(
+	'wp_robots',
+	function ( $robots ) {
+		if ( is_singular( DOX_UU_TEMPLATE_TYPES ) ) {
+			$robots['noindex'] = true;
+		}
+		return $robots;
+	}
+);
+add_filter(
+	'rank_math/frontend/robots',
+	function ( $robots ) {
+		if ( is_singular( DOX_UU_TEMPLATE_TYPES ) ) {
+			$robots['index'] = 'noindex';
+		}
+		return $robots;
+	}
 );
 
 register_deactivation_hook(
